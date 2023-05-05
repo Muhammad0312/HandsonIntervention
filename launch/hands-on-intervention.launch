@@ -1,0 +1,7 @@
+<launch>
+    <!-- Configurable arguments -->
+    <include file="$(find turtlebot_simulation)/launch/swiftpro_basic.launch"/>
+    
+    <node pkg="hands-on-intervention" type="controller.py" name="controller"/>
+
+</launch>
