@@ -41,9 +41,28 @@ def jacobian(t1, t2, t3, l1, l2, l3, l4, l5):
     J[2, 0] = 0
     J[2, 1] = l2 * math.sin(t2)
     J[2, 2] = -l3 * math.cos(t3)
-    
     return J
 
+def kinematics_base(theta, dx, dy, D):
+    # Compute the position of the end effector
+    #dx,dy is base position in world frame
+    x = dx + D * math.cos(theta)
+    y = dy + D * math.sin(theta)
+
+    # Return the position as a numpy array
+    return np.array([x, y])
+
+def jacobian_base(theta, D):
+    # Compute the Jacobian matrix
+    J = np.zeros((2, 3))
+    J[0, 0] = -D * math.sin(theta)
+    J[0, 1] = 1
+    J[0, 2] = 0
+    J[1, 0] = D * math.cos(theta)
+    J[1, 1] = 0
+    J[1, 2] = 1
+
+    return J
 
 def plot_arm_workspace():
     l1 = 0.108
