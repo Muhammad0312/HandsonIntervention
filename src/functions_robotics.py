@@ -89,9 +89,9 @@ def plot_arm_workspace():
     l4 = 0.0565
     l5 = 0.0722
 
-    t1_range = np.arange(-1.57, 1.57, 0.1)
-    t2_range = np.arange(-1.57, 0, 0.1)
-    t3_range = np.arange(-1.57, 0, 0.1)
+    t1_range = np.arange(-1.2, 1.2, 0.1)
+    t2_range = np.arange(-1.2, -0.3, 0.1)
+    t3_range = np.arange(-1.2, -0.3, 0.1)
     x_vals = []
     y_vals = []
     z_vals = []
