@@ -43,26 +43,26 @@ def jacobian(t1, t2, t3, l1, l2, l3, l4, l5):
     J[2, 2] = -l3 * math.cos(t3)
     return J
 
-def kinematics_base(theta, dx, dy, D):
+def kinematics_base(theta, dx, dy):
     # Compute the position of the end effector
-    #dx,dy is base position in world frame
-    x = dx + D * math.cos(theta)
-    y = dy + D * math.sin(theta)
+    # dx,dy is base position in world frame
+    # 0.115 = the distance between the center of base to arm frame(J1 pose)
+    x = dx + 0.115 * math.cos(theta)
+    y = dy + 0.115 * math.sin(theta)
 
     # Return the position as a numpy array
     return np.array([x, y])
 
-def jacobian_base(theta, D):
-    # Compute the Jacobian matrix
-    J = np.zeros((2, 3))
-    J[0, 0] = -D * math.sin(theta)
-    J[0, 1] = 1
-    J[0, 2] = 0
-    J[1, 0] = D * math.cos(theta)
-    J[1, 1] = 0
-    J[1, 2] = 1
-
+def jacobian_base(theta,D_base):
+    #https://www.mdpi.com/2218-6581/6/3/17  paper_reference
+    #D_base Distance from the center of the robot to the arm
+    L = 0.115  # Half the distance between the wheels
+    rho=D_base/L
+    r= 0.025    # wheel raduis(not sure about the number)
+    J = np.array([[np.cos(theta) + rho * np.sin(theta), -rho * np.cos(theta) + np.sin(theta)],
+                  [np.sin(theta) - rho * np.cos(theta), rho * np.sin(theta) + np.cos(theta)]]) * r / 2
     return J
+ 
 
 def Total_kinematics_and_jacobian(theta_base, dx_base, dy_base, D_base, t1, t2, t3, l1, l2, l3, l4, l5):
     # Compute the position of the end effector
