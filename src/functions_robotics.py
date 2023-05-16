@@ -29,58 +29,63 @@ def kinematics(t1, t2, t3, l1, l2, l3, l4, l5):
     # Return the position as a numpy array
     return np.array([x, y, z])
 
+def kinematics_total(theta_base, x_base, y_base,x_arm,y_arm,z_arm):
+    x_total=(0.5*math.cos(theta_base)-0.5*math.sin(theta_base))*x_arm + (-0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
+                         * y_arm +(0.0367*math.cos(theta_base)+x_base)
+    y_total=(0.5*math.cos(theta_base)+0.5*math.sin(theta_base))*x_arm + (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
+                         * y_arm +(0.0367*math.sin(theta_base)+y_base)
+    z_total=-z_arm-0.198
+
+    return x_total,y_total,z_total
+
 def jacobian(t1, t2, t3, l1, l2, l3, l4, l5):
     # Compute the Jacobian matrix
     J = np.zeros((3, 3))
-    J[0, 0] = -math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)
-    J[0, 1] = -math.cos(t1) * l2 * math.cos(t2)
-    J[0, 2] = - math.cos(t1) * l3 * math.sin(t3)
-    J[1, 0] = math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)
-    J[1, 1] = -math.sin(t1) * l2 * math.cos(t2)
-    J[1, 2] = - math.sin(t1) * l3 * math.sin(t3)
-    J[2, 0] = 0
-    J[2, 1] = l2 * math.sin(t2)
-    J[2, 2] = -l3 * math.cos(t3)
+    J[0, 0] = -math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4) #dx t1
+    J[0, 1] = -math.cos(t1) * l2 * math.cos(t2) #dx t2
+    J[0, 2] = - math.cos(t1) * l3 * math.sin(t3) #dx t3
+    J[1, 0] = math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4) #dy t1
+    J[1, 1] = -math.sin(t1) * l2 * math.cos(t2) #dy t2
+    J[1, 2] = - math.sin(t1) * l3 * math.sin(t3) #dy d3
+    J[2, 0] = 0 #dz t1
+    J[2, 1] = l2 * math.sin(t2) #dz t2
+    J[2, 2] = -l3 * math.cos(t3) #dz t3
     return J
 
-def kinematics_base(theta, dx, dy):
-    # Compute the position of the end effector
-    # dx,dy is base position in world frame
-    # 0.115 = the distance between the center of base to arm frame(J1 pose)
-    x = dx + 0.115 * math.cos(theta)
-    y = dy + 0.115 * math.sin(theta)
-
-    # Return the position as a numpy array
-    return np.array([x, y])
-
-def jacobian_base(theta,D_base):
+def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5, theta_base,x_base, y_base):
+    x_arm,y_arm,z_arm = kinematics(t1, t2, t3, l1, l2, l3, l4, l5)
     #https://www.mdpi.com/2218-6581/6/3/17  paper_reference
-    #D_base Distance from the center of the robot to the arm
-    L = 0.115  # Half the distance between the wheels
-    rho=D_base/L
-    r= 0.025    # wheel raduis(not sure about the number)
-    J = np.array([[np.cos(theta) + rho * np.sin(theta), -rho * np.cos(theta) + np.sin(theta)],
-                  [np.sin(theta) - rho * np.cos(theta), rho * np.sin(theta) + np.cos(theta)]]) * r / 2
+    J = np.zeros((3, 6))
+    J[0, 0] = (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + (-0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
+                         * (math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
+    J[0, 1] = (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))*(-math.cos(t1) * l2 * math.cos(t2)) + (-0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
+                         * (-math.sin(t1) * l2 * math.cos(t2))  
+    J[0, 2] = (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))*(- math.cos(t1) * l3 * math.sin(t3)) + (-0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
+                         * (- math.sin(t1) * l3 * math.sin(t3)) 
+    J[0 ,3] = (-0.5*math.sin(theta_base)-0.5*math.sin(theta_base))*x_arm + (0.5*math.sin(theta_base)-0.5*math.cos(theta_base))\
+                         * y_arm +(-0.0367*math.sin(theta_base))
+    J[0 ,4] =1
+    J[0 ,5] =0
+    J[1, 0] =(0.5*math.cos(theta_base)+0.5*math.sin(theta_base))*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
+                          * math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4) 
+    J[1,1]=(0.5*math.cos(theta_base)+0.5*math.sin(theta_base))*(-math.cos(t1) * l2 * math.cos(t2)) + (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
+                         * (-math.sin(t1) * l2 * math.cos(t2))
+    J[1,2]=(0.5*math.cos(theta_base)+0.5*math.sin(theta_base))*(- math.cos(t1) * l3 * math.sin(t3)) + (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
+                          * (- math.sin(t1) * l3 * math.sin(t3))
+    J[1,3]=(-0.5*math.sin(theta_base)+0.5*math.sin(theta_base))*x_arm + (-0.5*math.sin(theta_base)-0.5*math.cos(theta_base))\
+                         * y_arm +(0.0367*math.cos(theta_base))
+    J[1,4]=0
+    J[1,5]=1
+    J[2,0]=-0.198
+    J[2,1]=-( l2 * math.sin(t2))-0.198
+    J[2,2]=-(-l3 * math.cos(t3))-0.198
+    J[2,3]=0
+    J[2,4]=0
+    J[2,5]=0
+    
     return J
  
-
-def Total_kinematics_and_jacobian(theta_base, dx_base, dy_base, D_base, t1, t2, t3, l1, l2, l3, l4, l5):
-    # Compute the position of the end effector
-    base_pos = kinematics_base(theta_base, dx_base, dy_base, D_base)
-    x = base_pos[0] + math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)
-    y = base_pos[1] + math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)
-    z = -(l2 * math.cos(t2) + l3 * math.sin(t3) + l1 - l5)
-
-    # Return the position as a numpy array
-    pos = np.array([x, y, z])
-
-    # Compute the Jacobian matrix
-    J_base = jacobian_base(theta_base, D_base)
-    J_arm = jacobian(t1, t2, t3, l1, l2, l3, l4, l5)
-    J = np.concatenate((J_base, J_arm), axis=0)
-
-    return pos, J
-
+ 
 
 def plot_arm_workspace():
     l1 = 0.108
