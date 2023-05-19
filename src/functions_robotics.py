@@ -4,22 +4,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import random
 
-# x = (l2 * cos(t2) + l3 * sin(t3) + l4) * cos(t1)
-# y = (l2 * cos(t2) + l3 * sin(t3) + l4) * sin(t1)
-# z = -l2 * sin(t2) + l3 * cos(t3) + l1 - l5
-
-# dx/dt1 = -sin(t1) * (l2 * cos(t2) + l3 * sin(t3) + l4)
-# dx/dt2 = -(l2 * sin(t2) - l3 * cos(t3)) * sin(t1)
-# dx/dt3 = l3 * sin(t1) * cos(t3)
-
-# dy/dt1 = cos(t1) * (l2 * cos(t2) + l3 * sin(t3) + l4)
-# dy/dt2 = -(l2 * sin(t2) - l3 * cos(t3)) * cos(t1)
-# dy/dt3 = l3 * cos(t1) * sin(t3)
-
-# dz/dt1 = 0
-# dz/dt2 = -l2 * cos(t2) - l3 * sin(t3)
-# dz/dt3 = -l3 * sin(t3) * cos(t2)
-
 def kinematics(t1, t2, t3, l1, l2, l3, l4, l5):
     # Compute the position of the end effecto
     x = math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)
@@ -29,11 +13,17 @@ def kinematics(t1, t2, t3, l1, l2, l3, l4, l5):
     # Return the position as a numpy array
     return np.array([x, y, z])
 
-def kinematics_total(theta_base, x_base, y_base,x_arm,y_arm,z_arm):
-    x_total=(0.5*math.cos(theta_base)-0.5*math.sin(theta_base))*x_arm + (-0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
-                         * y_arm +(0.0367*math.cos(theta_base)+x_base)
-    y_total=(0.5*math.cos(theta_base)+0.5*math.sin(theta_base))*x_arm + (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
-                         * y_arm +(0.0367*math.sin(theta_base)+y_base)
+def kinematics_total(theta_base, x_base, y_base,x_arm,y_arm,z_arm,alpha,t):
+    #------------------------------------------ just for simplification------------------------------
+    a= (math.cos(theta_base)* math.cos(alpha))-(math.sin(theta_base)*math.sin(alpha))
+    b= (-math.cos(theta_base)* math.sin(alpha))-(math.sin(theta_base)*math.cos(alpha))
+    c= (math.cos(theta_base)* math.cos(alpha)*t)-(math.sin(theta_base)*math.sin(alpha)*t) + x_base
+    d= (math.sin(theta_base)* math.cos(alpha))+(math.cos(theta_base)*math.sin(alpha))
+    e= (-math.sin(theta_base)* math.sin(alpha))+(math.cos(theta_base)*math.cos(alpha))
+    f= (math.sin(theta_base)* math.cos(alpha)*t)+(math.cos(theta_base)*math.sin(alpha)*t) + y_base
+
+    x_total=(0.5)(a+b)*x_arm + (-0.5)(a-b)* y_arm +(0.0367*a + c)
+    y_total=(0.5)(d+e)*x_arm + (-0.5)(d-e)* y_arm +(0.0367*d + f)
     z_total=-z_arm-0.198
 
     return x_total,y_total,z_total
@@ -52,37 +42,47 @@ def jacobian(t1, t2, t3, l1, l2, l3, l4, l5):
     J[2, 2] = -l3 * math.cos(t3) #dz t3
     return J
 
-def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5, theta_base,x_base, y_base):
+def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5, theta_base,x_base, y_base,alpha,t):
     x_arm,y_arm,z_arm = kinematics(t1, t2, t3, l1, l2, l3, l4, l5)
-    #https://www.mdpi.com/2218-6581/6/3/17  paper_reference
-    J = np.zeros((3, 6))
-    J[0, 0] = (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + (-0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
-                         * (math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
-    J[0, 1] = (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))*(-math.cos(t1) * l2 * math.cos(t2)) + (-0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
-                         * (-math.sin(t1) * l2 * math.cos(t2))  
-    J[0, 2] = (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))*(- math.cos(t1) * l3 * math.sin(t3)) + (-0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
-                         * (- math.sin(t1) * l3 * math.sin(t3)) 
-    J[0 ,3] = (-0.5*math.sin(theta_base)-0.5*math.sin(theta_base))*x_arm + (0.5*math.sin(theta_base)-0.5*math.cos(theta_base))\
-                         * y_arm +(-0.0367*math.sin(theta_base))
-    J[0 ,4] =1
-    J[0 ,5] =0
-    J[1, 0] =(0.5*math.cos(theta_base)+0.5*math.sin(theta_base))*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
-                          * math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4) 
-    J[1,1]=(0.5*math.cos(theta_base)+0.5*math.sin(theta_base))*(-math.cos(t1) * l2 * math.cos(t2)) + (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
-                         * (-math.sin(t1) * l2 * math.cos(t2))
-    J[1,2]=(0.5*math.cos(theta_base)+0.5*math.sin(theta_base))*(- math.cos(t1) * l3 * math.sin(t3)) + (0.5*math.cos(theta_base)-0.5*math.sin(theta_base))\
-                          * (- math.sin(t1) * l3 * math.sin(t3))
-    J[1,3]=(-0.5*math.sin(theta_base)+0.5*math.sin(theta_base))*x_arm + (-0.5*math.sin(theta_base)-0.5*math.cos(theta_base))\
-                         * y_arm +(0.0367*math.cos(theta_base))
-    J[1,4]=0
-    J[1,5]=1
-    J[2,0]=-0.198
-    J[2,1]=-( l2 * math.sin(t2))-0.198
-    J[2,2]=-(-l3 * math.cos(t3))-0.198
+        #------------------------------------------ just for simplification------------------------------
+    a= (math.cos(theta_base)* math.cos(alpha))-(math.sin(theta_base)*math.sin(alpha))
+    b= (-math.cos(theta_base)* math.sin(alpha))-(math.sin(theta_base)*math.cos(alpha))
+    c= (math.cos(theta_base)* math.cos(alpha)*t)-(math.sin(theta_base)*math.sin(alpha)*t) + x_base
+    d= (math.sin(theta_base)* math.cos(alpha))+(math.cos(theta_base)*math.sin(alpha))
+    e= (-math.sin(theta_base)* math.sin(alpha))+(math.cos(theta_base)*math.cos(alpha))
+    f= (math.sin(theta_base)* math.cos(alpha)*t)+(math.cos(theta_base)*math.sin(alpha)*t) + y_base
+
+    J = np.zeros((3, 5))
+    #--------------------------------------x all-----------------------------------------
+    J[0, 0] = (0.5)(a+b)*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + (-0.5)(a-b)* (math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
+
+    J[0, 1] = (0.5)(a+b)*(-math.cos(t1) * l2 * math.cos(t2)) + (-0.5)(a-b)* (-math.sin(t1) * l2 * math.cos(t2)) 
+
+    J[0, 2] = (0.5)(a+b)*(- math.cos(t1) * l3 * math.sin(t3)) + (-0.5)(a-b)* (- math.sin(t1) * l3 * math.sin(t3))
+
+    J[0 ,3] = ((-0.5*(math.cos(theta_base)* math.sin(alpha) + math.sin(theta_base)* math.cos(alpha)))+(-0.5*(math.cos(theta_base)* math.cos(alpha)- math.sin(theta_base)*math.sin(alpha))))*x_arm + \
+                ((0.5*(math.cos(theta_base)* math.sin(alpha) - math.sin(theta_base)*math.cos(alpha)))+(-0.5*(math.cos(theta_base)* math.cos(alpha)-math.sin(theta_base)*math.sin(alpha))))* y_arm \
+                +(-0.0367*d + (-t*math.cos(theta_base)* math.sin(alpha))+(-t*math.sin(theta_base)* math.sin(alpha)))
+    J[0 ,4] =math.cos(theta_base)* math.cos(alpha)-math.sin(theta_base)*math.sin(alpha)
+    
+    #--------------------------------------y all-----------------------------------------
+    J[1, 0] =(0.5)(d+e)*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + (-0.5)(d-e)* (math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
+
+    J[1,1]=(0.5)(d+e)*(-math.cos(t1) * l2 * math.cos(t2)) + (-0.5)(d-e)* (-math.sin(t1) * l2 * math.cos(t2)) 
+
+    J[1,2]=(0.5)(d+e)*(- math.cos(t1) * l3 * math.sin(t3)) + (-0.5)(d-e)* ((- math.sin(t1) * l3 * math.sin(t3))) 
+
+    J[1,3]= ((0.5*(-math.sin(theta_base)* math.sin(alpha) + math.cos(theta_base)* math.cos(alpha)))+(-0.5*(math.sin(theta_base)* math.cos(alpha)- math.cos(theta_base)*math.sin(alpha))))*x_arm + \
+                ((0.5*(math.sin(theta_base)* math.sin(alpha) - math.cos(theta_base)*math.cos(alpha)))+(-0.5*(math.sin(theta_base)* math.cos(alpha)-math.cos(theta_base)*math.sin(alpha))))* y_arm \
+                +(0.0367*a + (t*math.cos(theta_base)* math.cos(alpha))+(-t*math.sin(theta_base)* math.sin(alpha)))
+    J[1,4]=math.sin(theta_base)* math.cos(alpha)+math.cos(theta_base)*math.sin(alpha)
+
+    #--------------------------------------z all-----------------------------------------
+    J[2, 0] = 0 
+    J[2, 1] = -l2 * math.sin(t2) #dz t2
+    J[2, 2] = l3 * math.cos(t3) #dz t3
     J[2,3]=0
     J[2,4]=0
-    J[2,5]=0
-    
     return J
  
  
