@@ -13,7 +13,7 @@ def kinematics(t1, t2, t3, l1, l2, l3, l4, l5):
     # Return the position as a numpy array
     return np.array([x, y, z])
 
-def kinematics_total(theta_base, x_base, y_base,x_arm,y_arm,z_arm,alpha,t):
+def kinematics_total(x_arm,y_arm,z_arm, x_base, y_base,theta_base,alpha,t):
     #------------------------------------------ just for simplification------------------------------
     a= (math.cos(theta_base)* math.cos(alpha))-(math.sin(theta_base)*math.sin(alpha))
     b= (-math.cos(theta_base)* math.sin(alpha))-(math.sin(theta_base)*math.cos(alpha))
@@ -22,9 +22,9 @@ def kinematics_total(theta_base, x_base, y_base,x_arm,y_arm,z_arm,alpha,t):
     e= (-math.sin(theta_base)* math.sin(alpha))+(math.cos(theta_base)*math.cos(alpha))
     f= (math.sin(theta_base)* math.cos(alpha)*t)+(math.cos(theta_base)*math.sin(alpha)*t) + y_base
 
-    x_total=(0.5)(a+b)*x_arm + (-0.5)(a-b)* y_arm +(0.0367*a + c)
-    y_total=(0.5)(d+e)*x_arm + (-0.5)(d-e)* y_arm +(0.0367*d + f)
-    z_total=-z_arm-0.198
+    x_total=0.5*(a+b)*x_arm + -0.5*(a-b)* y_arm + 0.0367*a + c 
+    y_total=0.5*(d+e)*x_arm + -0.5*(d-e)* y_arm + 0.0367*d + f 
+    z_total=  z_arm-0.198
 
     return x_total,y_total,z_total
 
@@ -42,7 +42,7 @@ def jacobian(t1, t2, t3, l1, l2, l3, l4, l5):
     J[2, 2] = -l3 * math.cos(t3) #dz t3
     return J
 
-def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5, theta_base,x_base, y_base,alpha,t):
+def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alpha,t):
     x_arm,y_arm,z_arm = kinematics(t1, t2, t3, l1, l2, l3, l4, l5)
         #------------------------------------------ just for simplification------------------------------
     a= (math.cos(theta_base)* math.cos(alpha))-(math.sin(theta_base)*math.sin(alpha))
@@ -54,11 +54,11 @@ def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5, theta_base,x_base, y_base,alp
 
     J = np.zeros((3, 5))
     #--------------------------------------x all-----------------------------------------
-    J[0, 0] = (0.5)(a+b)*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + (-0.5)(a-b)* (math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
+    J[0, 0] = 0.5*(a+b)*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + -0.5*(a-b)* (math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
 
-    J[0, 1] = (0.5)(a+b)*(-math.cos(t1) * l2 * math.cos(t2)) + (-0.5)(a-b)* (-math.sin(t1) * l2 * math.cos(t2)) 
+    J[0, 1] = 0.5*(a+b)*(-math.cos(t1) * l2 * math.cos(t2)) + -0.5*(a-b)* (-math.sin(t1) * l2 * math.cos(t2)) 
 
-    J[0, 2] = (0.5)(a+b)*(- math.cos(t1) * l3 * math.sin(t3)) + (-0.5)(a-b)* (- math.sin(t1) * l3 * math.sin(t3))
+    J[0, 2] = 0.5*(a+b)*(- math.cos(t1) * l3 * math.sin(t3)) + -0.5*(a-b)* (- math.sin(t1) * l3 * math.sin(t3))
 
     J[0 ,3] = ((-0.5*(math.cos(theta_base)* math.sin(alpha) + math.sin(theta_base)* math.cos(alpha)))+(-0.5*(math.cos(theta_base)* math.cos(alpha)- math.sin(theta_base)*math.sin(alpha))))*x_arm + \
                 ((0.5*(math.cos(theta_base)* math.sin(alpha) - math.sin(theta_base)*math.cos(alpha)))+(-0.5*(math.cos(theta_base)* math.cos(alpha)-math.sin(theta_base)*math.sin(alpha))))* y_arm \
@@ -66,11 +66,11 @@ def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5, theta_base,x_base, y_base,alp
     J[0 ,4] =math.cos(theta_base)* math.cos(alpha)-math.sin(theta_base)*math.sin(alpha)
     
     #--------------------------------------y all-----------------------------------------
-    J[1, 0] =(0.5)(d+e)*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + (-0.5)(d-e)* (math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
+    J[1, 0] = 0.5*(d+e)*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + -0.5*(d-e)* (math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
 
-    J[1,1]=(0.5)(d+e)*(-math.cos(t1) * l2 * math.cos(t2)) + (-0.5)(d-e)* (-math.sin(t1) * l2 * math.cos(t2)) 
+    J[1,1]= 0.5*(d+e)*(-math.cos(t1) * l2 * math.cos(t2)) + -0.5*(d-e)* (-math.sin(t1) * l2 * math.cos(t2)) 
 
-    J[1,2]=(0.5)(d+e)*(- math.cos(t1) * l3 * math.sin(t3)) + (-0.5)(d-e)* ((- math.sin(t1) * l3 * math.sin(t3))) 
+    J[1,2]=0.5*(d+e)*(- math.cos(t1) * l3 * math.sin(t3)) + -0.5*(d-e)* ((- math.sin(t1) * l3 * math.sin(t3))) 
 
     J[1,3]= ((0.5*(-math.sin(theta_base)* math.sin(alpha) + math.cos(theta_base)* math.cos(alpha)))+(-0.5*(math.sin(theta_base)* math.cos(alpha)- math.cos(theta_base)*math.sin(alpha))))*x_arm + \
                 ((0.5*(math.sin(theta_base)* math.sin(alpha) - math.cos(theta_base)*math.cos(alpha)))+(-0.5*(math.sin(theta_base)* math.cos(alpha)-math.cos(theta_base)*math.sin(alpha))))* y_arm \

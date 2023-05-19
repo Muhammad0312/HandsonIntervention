@@ -16,7 +16,7 @@ from std_msgs.msg import Float64MultiArray
 class JointController:
     def __init__(self):
 
-        self.desired = [1.0,0.0,-0.5]
+        self.desired = [1.0,1.0,-0.5]
 
         self.l1 = 0.108
         self.l2 = 0.142
@@ -26,6 +26,12 @@ class JointController:
         self.K = np.diag([1, 1,1])
         self.orient = 0
         self.current_pose = [0.0,0.0,0.0]
+
+        self.t = 0
+        self.alpha = 0
+
+        self.last_x = 0.0
+        self.last_theta = 0.0
 
         # Maximum linear velocity control action                   
         self.v_max = 0.15
@@ -50,6 +56,13 @@ class JointController:
                                                               odom.pose.pose.orientation.z,
                                                               odom.pose.pose.orientation.w])
         self.current_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, yaw])
+        
+        self.t = self.current_pose[0] - self.last_x
+        self.last_x = self.current_pose[0]
+
+        self.alpha = self.current_pose[2] - self.last_theta
+        self.last_theta = self.current_pose[2]
+
         # print('odom_received: ', self.current_pose)
         self.odom_received =  True
 
@@ -84,7 +97,7 @@ class JointController:
         
         damping_factor = 0.01
         J_t_J = np.dot(J.transpose(), J)
-        J_t_J_damped = J_t_J + damping_factor * np.eye(6) # add damping to diagonal
+        J_t_J_damped = J_t_J + damping_factor * np.eye(5) # add damping to diagonal
         J_t_J_inv = np.linalg.inv(J_t_J_damped)
         J_t_J_inv_J_t = np.dot(J_t_J_inv, J.transpose())
         
@@ -98,13 +111,18 @@ class JointController:
         self.velocity_pub.publish(velocity_msg)
         # print("Joint published:", velocity_msg.data)
 
-        # # transform x_dot, y_dot, theta_dot to v and w
-        x_dot, y_dot, theta_dot = dq[3],dq[4], dq[5]
-        # v = x_dot/(cos(self.current_pose[2])+0.0001)
-        v = math.sqrt(x_dot**2 + y_dot**2 + 0.0001) # 0.0001 to avoid singularity
-        w = theta_dot
+        alpha_dot = dq[3]
+        t_dot = dq[4]
         # print('v,w: ', v, w)
-        self.__send_command__(v, w)
+        self.__send_command__(t_dot, alpha_dot)
+
+        # # transform x_dot, y_dot, theta_dot to v and w
+        # x_dot, y_dot, theta_dot = dq[3],dq[4], dq[5]
+        # # v = x_dot/(cos(self.current_pose[2])+0.0001)
+        # v = math.sqrt(x_dot**2 + y_dot**2 + 0.0001) # 0.0001 to avoid singularity
+        # w = theta_dot
+        # # print('v,w: ', v, w)
+        # self.__send_command__(v, w)
 
         self.publish_points(sigma,sigma_d)
 
@@ -120,11 +138,11 @@ class JointController:
             [x_base, y_base, theta_base] = self.current_pose
             
             [x, y, z]= kinematics(t1, t2, t3, self.l1, self.l2, self.l3, self.l4, self.l5)
-            [x_total,y_total,z_total] = kinematics_total(x, y, z, x_base, y_base, theta_base)
+            [x_total,y_total,z_total] = kinematics_total(x, y, z, x_base, y_base, theta_base,self.alpha,self.t)
 
             # J = jacobian(t1, t2, t3, self.l1, self.l2, self.l3, self.l4, self.l5)
             J = jacobian_total(t1, t2, t3, self.l1, self.l2, self.l3, self.l4, self.l5 \
-                           ,x_base, y_base,theta_base)
+                           ,x_base, y_base,theta_base, self.alpha,self.t)
 
             # print("jacob_size: ", J)
 
@@ -135,7 +153,7 @@ class JointController:
             # print(np.round([x_total,y_total,z_total],2))
             self.publish_points([x_total,y_total,z_total],np.array(self.desired))
             
-            self.controller (J, last_T,self.desired)
+            # self.controller (J, last_T,self.desired)
             
 
 
