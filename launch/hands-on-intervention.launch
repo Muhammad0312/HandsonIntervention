@@ -4,4 +4,6 @@
     
     <node pkg="hands-on-intervention" type="controller.py" name="controller"/>
 
+    <node pkg="hands-on-intervention" type="FK_diff_drive.py" name="velocity_converter"/>
+
 </launch>

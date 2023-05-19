@@ -4,7 +4,9 @@ import time
 import tf
 import numpy as np
 import math
+from nav_msgs.msg import Odometry
 from std_msgs.msg import String
+from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg  import JointState
 from math import cos, sin, tan
@@ -22,10 +24,38 @@ class JointController:
         self.K = np.diag([1, 1,1])
         self.orient = 0
         self.joints_sub = rospy.Subscriber('/swiftpro/joint_states', JointState, self.get_joints)
+
+        # Subscriber to groundtruth
+        self.odom_sub = rospy.Subscriber('/turtlebot/stonefish_simulator/ground_truth_odometry', Odometry, self.get_odom)
+
+        #Publisher Linear and angular veocities to the topic which will convert to joint velocities and publish to wheel_velocities topic
+        self.cmd_pub = rospy.Publisher('/lin_ang_velocities', Twist, queue_size=1)
+
         self.velocity_pub = rospy.Publisher('/swiftpro/joint_velocity_controller/command', Float64MultiArray, queue_size=10)
 
         self.EE_pose_pub = rospy.Publisher('/EE_Pose', PoseStamped, queue_size=10)
         self.desired_pose_pub = rospy.Publisher('/desired_Pose', PoseStamped, queue_size=10)
+
+    def get_odom(self, odom):
+        _, _, yaw = tf.transformations.euler_from_quaternion([odom.pose.pose.orientation.x, 
+                                                              odom.pose.pose.orientation.y,
+                                                              odom.pose.pose.orientation.z,
+                                                              odom.pose.pose.orientation.w])
+        self.current_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, yaw])
+        self.odom_received =  True
+
+    def __send_command__(self, v, w):
+        '''
+        Transform linear and angular velocity (v, w) into a Twist message and publish it
+        '''
+        cmd = Twist()
+        cmd.linear.x = np.clip(v, -self.v_max, self.v_max)
+        cmd.linear.y = 0
+        cmd.linear.z = 0
+        cmd.angular.x = 0
+        cmd.angular.y = 0
+        cmd.angular.z = np.clip(w, -self.w_max, self.w_max)
+        self.cmd_pub.publish(cmd)
 
     def controller(self,J, last_T,desired):
         # sigma_d = np.array([0.21436294617428864, -0.10313686152971896,-0.2])
