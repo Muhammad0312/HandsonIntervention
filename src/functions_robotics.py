@@ -45,7 +45,7 @@ def kinematics_total(t1, t2, t3,t4, l1, l2, l3, l4, l5,x_base, y_base,theta_base
     z_total= z_arm-0.198
     row_total=0
     pitch_total=0
-    yaw_total= t4
+    yaw_total= t4+theta_base+t1
 
     return x_total,y_total,z_total,row_total,pitch_total,yaw_total
 
@@ -105,11 +105,11 @@ def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alph
     J[3,:]=0 
     J[4,:]=0
     #-------------------------------------- yaw-----------------------------------------
-    J[5,0]=0
+    J[5,0]=1
     J[5,1]=0
     J[5,2]=0
     J[5,3]=1
-    J[5,4]=0
+    J[5,4]=1
     J[5,5]=0
     return J 
 
