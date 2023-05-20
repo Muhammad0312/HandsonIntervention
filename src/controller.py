@@ -93,7 +93,6 @@ class JointController:
         if len(joint_pos) == 4:
             [t1, t2, t3, t4] = joint_pos
             #EE orientation only depends on last joint
-            self.orient = t4
             [x, y, z]= kinematics(t1, t2, t3, self.l1, self.l2, self.l3, self.l4, self.l5)
             J = jacobian(t1, t2, t3, self.l1, self.l2, self.l3, self.l4, self.l5)
             last_T = [x, y, z]

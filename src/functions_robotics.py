@@ -47,7 +47,7 @@ def kinematics_total(t1, t2, t3,t4, l1, l2, l3, l4, l5,x_base, y_base,theta_base
     pitch_total=0
     yaw_total= t4
 
-    return x_total,y_total,z_total,yaw_total
+    return x_total,y_total,z_total,row_total,pitch_total,yaw_total
 
 def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alpha,t):
     x_arm,y_arm,z_arm = kinematics(t1, t2, t3, l1, l2, l3, l4, l5)

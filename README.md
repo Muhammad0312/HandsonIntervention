@@ -6,7 +6,7 @@ last update:
 ## HOW TO RUN:
 
 **launch mobile stuff**
-1. roslaunch roslaunch turtlebot_simulation turtlebot_hoi.launch
+1. roslaunch turtlebot_simulation turtlebot_hoi.launch
 2. rosrun pose-graph-slam integration.py
 3. rosrun hands-on-intervention FK_diff_drive.py
 4. rosrun hands-on-intervention mobile_controller.py
