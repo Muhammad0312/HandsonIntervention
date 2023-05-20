@@ -16,7 +16,7 @@ from std_msgs.msg import Float64MultiArray
 class JointController:
     def __init__(self):
 
-        self.desired = [1.0,1.0,-0.5]
+        self.desired = [1.0,1.0,-0.2]
 
         self.l1 = 0.108
         self.l2 = 0.142
@@ -153,7 +153,7 @@ class JointController:
             # print(np.round([x_total,y_total,z_total],2))
             self.publish_points([x_total,y_total,z_total],np.array(self.desired))
             
-            # self.controller (J, last_T,self.desired)
+            self.controller (J, last_T,self.desired)
             
 
 
