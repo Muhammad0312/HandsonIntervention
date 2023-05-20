@@ -129,7 +129,7 @@ class JointController:
         new_pose.pose.position.y = sigma[1]
         new_pose.pose.position.z = sigma[2]
 
-        quaternion = tf.transformations.quaternion_from_euler(0, 0, sigma[3])
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, sigma[-1])
         #type(pose) = geometry_msgs.msg.Pose
         new_pose.pose.orientation.x = quaternion[0]
         new_pose.pose.orientation.y = quaternion[1]
@@ -145,6 +145,15 @@ class JointController:
         new_pose2.pose.position.x = sigma_d[0]
         new_pose2.pose.position.y = sigma_d[1]
         new_pose2.pose.position.z = sigma_d[2]
+
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, sigma_d[-1])
+        #type(pose) = geometry_msgs.msg.Pose
+        new_pose2.pose.orientation.x = quaternion[0]
+        new_pose2.pose.orientation.y = quaternion[1]
+        new_pose2.pose.orientation.z = quaternion[2]
+        new_pose2.pose.orientation.w = quaternion[3]
+
+
         self.desired_pose_pub.publish(new_pose2)
 
     def get_odom(self, odom):
