@@ -3,31 +3,14 @@ import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import random
+#_______________________________________________________________FOR THE ARM ONLY _____________________________________
 
 def kinematics(t1, t2, t3, l1, l2, l3, l4, l5):
     # Compute the position of the end effecto
     x = math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)
     y = math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)
     z = -(l2 * math.cos(t2) + l3 * math.sin(t3) + l1 - l5)
-
-    # Return the position as a numpy array
     return np.array([x, y, z])
-
-def kinematics_total(x_arm,y_arm,z_arm, x_base, y_base,theta_base,alpha,t):
-    #------------------------------------------ just for simplification------------------------------
-    a= (math.cos(theta_base)* math.cos(alpha))-(math.sin(theta_base)*math.sin(alpha))
-    b= (-math.cos(theta_base)* math.sin(alpha))-(math.sin(theta_base)*math.cos(alpha))
-    c= (math.cos(theta_base)* math.cos(alpha)*t)-(math.sin(theta_base)*math.sin(alpha)*t) + x_base
-    d= (math.sin(theta_base)* math.cos(alpha))+(math.cos(theta_base)*math.sin(alpha))
-    e= (-math.sin(theta_base)* math.sin(alpha))+(math.cos(theta_base)*math.cos(alpha))
-    f= (math.sin(theta_base)* math.cos(alpha)*t)+(math.cos(theta_base)*math.sin(alpha)*t) + y_base
-
-    x_total=-b*x_arm + a*y_arm + c + 0.05*a
-    y_total=-e*x_arm + d*y_arm + f + 0.05*d
-    z_total= z_arm-0.198
-
-    return x_total,y_total,z_total
-
 def jacobian(t1, t2, t3, l1, l2, l3, l4, l5):
     # Compute the Jacobian matrix
     J = np.zeros((3, 3))
@@ -41,6 +24,30 @@ def jacobian(t1, t2, t3, l1, l2, l3, l4, l5):
     J[2, 1] = l2 * math.sin(t2) #dz t2
     J[2, 2] = -l3 * math.cos(t3) #dz t3
     return J
+#____________________________________________________________FOR ALL (ARM AND BASE)_______________________________________________________________
+
+def kinematics_total(t1, t2, t3,t4, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alpha,t):
+        #------------------------------------------ just for simplification------------------------------
+    a= (math.cos(theta_base)* math.cos(alpha))-(math.sin(theta_base)*math.sin(alpha))
+    b= (-math.cos(theta_base)* math.sin(alpha))-(math.sin(theta_base)*math.cos(alpha))
+    c= (math.cos(theta_base)* math.cos(alpha)*t)-(math.sin(theta_base)*math.sin(alpha)*t) + x_base
+    d= (math.sin(theta_base)* math.cos(alpha))+(math.cos(theta_base)*math.sin(alpha))
+    e= (-math.sin(theta_base)* math.sin(alpha))+(math.cos(theta_base)*math.cos(alpha))
+    f= (math.sin(theta_base)* math.cos(alpha)*t)+(math.cos(theta_base)*math.sin(alpha)*t) + y_base
+    #--------------------------------------------------------------------------------------------------
+    
+    x_arm = math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)
+    y_arm = math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)
+    z_arm= -(l2 * math.cos(t2) + l3 * math.sin(t3) + l1 - l5)
+
+    x_total=-b*x_arm + a*y_arm + c + 0.05*a
+    y_total=-e*x_arm + d*y_arm + f + 0.05*d
+    z_total= z_arm-0.198
+    row_total=0
+    pitch_total=0
+    yaw_total= t1+t4+theta_base
+
+    return x_total,y_total,z_total,yaw_total
 
 def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alpha,t):
     x_arm,y_arm,z_arm = kinematics(t1, t2, t3, l1, l2, l3, l4, l5)
@@ -60,7 +67,7 @@ def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alph
     E= -(math.sin(theta_base)* math.cos(alpha))-(math.cos(theta_base)*math.sin(alpha))
     F=-math.sin(theta_base)* math.sin(alpha)*t + math.cos(theta_base)*math.cos(alpha)*t
 
-    J = np.zeros((3, 5))
+    J = np.zeros((6, 6))
 
     # #--------------------------------------x all-----------------------------------------
     J[0, 0] = -b*(-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4)) + a*( math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4)) 
@@ -68,9 +75,10 @@ def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alph
     J[0, 1] = -b*(-math.cos(t1) * l2 * math.cos(t2)) + a*(-math.sin(t1) * l2 * math.cos(t2) ) 
 
     J[0, 2] = -b*(- math.cos(t1) * l3 * math.sin(t3)) + a*(- math.sin(t1) * l3 * math.sin(t3)) 
+    J[0,3] = 0
 
-    J[0 ,3] = -B * x_arm + A*y_arm + C + 0.05*A
-    J[0 ,4] =math.cos(theta_base)* math.cos(alpha)-math.sin(theta_base)*math.sin(alpha)
+    J[0 ,4] = -B * x_arm + A*y_arm + C + 0.05*A
+    J[0 ,5] =math.cos(theta_base)* math.cos(alpha)-math.sin(theta_base)*math.sin(alpha)
     
 #     #--------------------------------------y all-----------------------------------------
     J[1, 0] = -e*((-math.sin(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3)+l4))) + d*( math.cos(t1) * (-l2 * math.sin(t2) + l3 * math.cos(t3) + l4))
@@ -79,10 +87,11 @@ def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alph
     J[1,1]= e*(-math.cos(t1) * l2 * math.cos(t2)) + d*(-math.sin(t1) * l2 * math.cos(t2))
 
     J[1,2]=e*(- math.cos(t1) * l3 * math.sin(t3)) + d*(- math.sin(t1) * l3 * math.sin(t3)) 
+    J[1,3]=0
 
-    J[1,3]= E*x_arm + D*y_arm + F + 0.05*D
+    J[1,4]= E*x_arm + D*y_arm + F + 0.05*D
 
-    J[1,4]=math.sin(theta_base)* math.cos(alpha)+math.cos(theta_base)*math.sin(alpha)
+    J[1,5]=math.sin(theta_base)* math.cos(alpha)+math.cos(theta_base)*math.sin(alpha)
 
 #     #--------------------------------------z all-----------------------------------------
     J[2, 0] = 0 #dz t1
@@ -90,6 +99,18 @@ def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alph
     J[2, 2] = -l3 * math.cos(t3) #dz t3
     J[2,3]=0
     J[2,4]=0
+    J[2,5]=0
+    
+    #--------------------------------------row and pitch-----------------------------------------
+    J[3,:]=0 
+    J[4,:]=0
+    #-------------------------------------- yaw-----------------------------------------
+    J[5,0]=1
+    J[5,1]=0
+    J[5,2]=0
+    J[5,3]=1
+    J[5,4]=1
+    J[5,5]=0
     return J 
 
 def plot_arm_workspace():
