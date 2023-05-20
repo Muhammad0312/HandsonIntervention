@@ -22,9 +22,13 @@ def kinematics_total(x_arm,y_arm,z_arm, x_base, y_base,theta_base,alpha,t):
     e= (-math.sin(theta_base)* math.sin(alpha))+(math.cos(theta_base)*math.cos(alpha))
     f= (math.sin(theta_base)* math.cos(alpha)*t)+(math.cos(theta_base)*math.sin(alpha)*t) + y_base
 
-    x_total=0.5*(a+b)*x_arm + -0.5*(a-b)* y_arm + 0.0367*a + c 
-    y_total=0.5*(d+e)*x_arm + -0.5*(d-e)* y_arm + 0.0367*d + f 
-    z_total=  z_arm-0.198
+    # x_total=0.5*(a+b)*x_arm + -0.5*(a-b)* y_arm + 0.0367*a + c 
+    # y_total=0.5*(d+e)*x_arm + -0.5*(d-e)* y_arm + 0.0367*d + f 
+    # z_total=  z_arm-0.198
+
+    x_total=-b*x_arm + a*y_arm + c + 0.05*a
+    y_total=-e*x_arm + d*y_arm + f + 0.05*d
+    z_total= z_arm-0.198
 
     return x_total,y_total,z_total
 
