@@ -1,8 +1,68 @@
 import numpy as np
 import math
+from math import sin, cos, sqrt
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import random
+
+def transfer_camframe_to_world(x_base, y_base,theta_base):
+    TCW = np.zeros((4, 4))
+    TCW[0,0]= -math.sin(theta_base)
+    TCW[0,1]= 0
+    TCW[0,2]= math.cos(theta_base)
+    TCW[0,3]= 0.122*math.cos(theta_base) + 0.033*math.sin(theta_base) + x_base
+    TCW[1,0]= math.cos(theta_base)
+    TCW[1,1]= 0
+    TCW[1,2]= math.sin(theta_base)
+    TCW[1,3]= 0.122*math.sin(theta_base) - 0.033*math.cos(theta_base) + y_base
+    TCW[2,0]= 0
+    TCW[2,1]= -1
+    TCW[2,2]= 0
+    TCW[2,3]= -0.082
+    TCW[3,0]= 0
+    TCW[3,1]= 0
+    TCW[3,2]= 0
+    TCW[3,3]= 1
+
+    return TCW
+
+# Damped Least-Squares
+def DLS(A, damping):
+    '''
+        Function computes the damped least-squares (DLS) solution to the matrix inverse problem.
+
+        Arguments:
+        A (Numpy array): matrix to be inverted
+        damping (double): damping factor
+
+        Returns:
+        (Numpy array): inversion of the input matrix
+    '''
+    # Implement the formula to compute the DLS of matrix A.
+    I = np.eye(np.shape(A)[0])
+    brak1 = np.linalg.inv(np.dot(A, np.transpose(A)) + damping**2 * I)
+    return np.dot(np.transpose(A),brak1)
+
+def rpy_to_quaternion(rpy):
+
+    [roll, pitch, yaw] = rpy
+
+    # Calculate the trigonometric functions
+    cy = cos(yaw * 0.5)
+    sy = sin(yaw * 0.5)
+    cp = cos(pitch * 0.5)
+    sp = sin(pitch * 0.5)
+    cr = cos(roll * 0.5)
+    sr = sin(roll * 0.5)
+
+    # Calculate the quaternion components
+    w = cy * cp * cr + sy * sp * sr
+    x = cy * cp * sr - sy * sp * cr
+    y = sy * cp * sr + cy * sp * cr
+    z = sy * cp * cr - cy * sp * sr
+
+    return np.array([w, x, y, z])
+
 #_______________________________________________________________FOR THE ARM ONLY _____________________________________
 
 def kinematics(t1, t2, t3, l1, l2, l3, l4, l5):
