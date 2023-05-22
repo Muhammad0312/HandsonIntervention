@@ -27,7 +27,7 @@ class JointController:
 
         # task related
         self.robot =  MobileManipulator("NAK-Bot")
-        # self.tasks = [Position2D("End-effector position", np.array([1.0,1.0,-0.2]).reshape(3,1))] 
+        self.tasks = [Position2D("End-effector position", np.array([1.0,1.0,-0.2]).reshape(3,1))] 
         # self.tasks = [Position2D("End-effector position", np.array([0.2,0.2,-0.2]).reshape(3,1)),
         #               Orientation2D("End-effector orientation", np.array([0,0,1.57]).reshape(3,1))] 
         # self.tasks = [Orientation2D("End-effector orientation", np.array([0,0,1.57]).reshape(3,1))]
@@ -50,7 +50,7 @@ class JointController:
         #             #   JointLimit("Joint limit", -1.57, 1.57, 0.5, 3),
         #               Position2D("End-effector position", np.array([0.2,0.2,0.5]).reshape(3,1))]
         
-        self.tasks = [Position2D("End-effector position", np.array([0.2,0.2,0.1]).reshape(3,1))]
+        # self.tasks = [Position2D("End-effector position", np.array([0.2,0.2,0.1]).reshape(3,1))]
                       
                       
 
@@ -119,9 +119,9 @@ class JointController:
 
         # Pass the received values to the desired file
         before= [position.x, position.y, position.z, orientation.x, orientation.y, orientation.z]
-        a=[(before[0]/100)+5,before[1]/100+5,before[2]/100+5,1]
-        print('odom_received: ', self.current_pose)
-        print("camera sees",a)
+        a=[(before[0]/100),before[1]/100,before[2]/100,1]
+        # print('odom_received: ', self.current_pose)
+        # print("camera sees",a)
         x=np.array(a)
         # print(x.shape)
         # print(transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2]).shape)
@@ -130,7 +130,7 @@ class JointController:
         print("after",after)
         after= list(after)
         self.sigma_d=after[0:3]
-        self.sigma_d[3:0]= [orientation.x, orientation.y, orientation.z]
+        self.sigma_d[3:0]= [0,0,0]
         print("desired",self.sigma_d[0:3])
         #-----------------------------------------just a desired in world no cam  
         # print(self.sigma_d)
