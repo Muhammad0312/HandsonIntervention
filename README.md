@@ -27,3 +27,10 @@ roslaunch hands-on-intervention hands-on-intervention.launch
 
 If you dont see markers on rviz, add them, topics are EE_pose and desired_pose
 save rviz so next time you dont have to add
+
+**integration with perception**
+- roslaunch turtlebot_simulation turtlebot_hoi.launch
+- rosrun hands-on-intervention FK_diff_drive.py
+- rosrun pose-graph-slam integration.py 
+- rosrun hands_on_perception aruco_pose_realsense_stonefish.py
+- rosrun hands-on-intervention mobile_controller.py

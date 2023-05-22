@@ -6,25 +6,25 @@ from mpl_toolkits.mplot3d import Axes3D
 import random
 
 def transfer_camframe_to_world(x_base, y_base,theta_base):
-    TCW = np.zeros((4, 4))
-    TCW[0,0]= -math.sin(theta_base)
-    TCW[0,1]= 0
-    TCW[0,2]= math.cos(theta_base)
-    TCW[0,3]= 0.122*math.cos(theta_base) + 0.033*math.sin(theta_base) + x_base
-    TCW[1,0]= math.cos(theta_base)
-    TCW[1,1]= 0
-    TCW[1,2]= math.sin(theta_base)
-    TCW[1,3]= 0.122*math.sin(theta_base) - 0.033*math.cos(theta_base) + y_base
-    TCW[2,0]= 0
-    TCW[2,1]= -1
-    TCW[2,2]= 0
-    TCW[2,3]= -0.082
-    TCW[3,0]= 0
-    TCW[3,1]= 0
-    TCW[3,2]= 0
-    TCW[3,3]= 1
+    world_to_base = np.array([
+        [np.cos(theta_base), -np.sin(theta_base), 0, x_base],
+        [np.sin(theta_base), np.cos(theta_base), 0, y_base],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ])
 
-    return TCW
+    base_to_cam= np.array([
+        [0, 0,1,0.122],
+        [1,0,0,-0.033],
+        [0,1,0,0.082],
+        [0, 0, 0, 1]
+    ])
+
+    # Perform matrix multiplication
+    world_to_cam= np.dot(world_to_base,base_to_cam)
+
+
+    return world_to_cam
 
 # Damped Least-Squares
 def DLS(A, damping):
@@ -172,6 +172,30 @@ def jacobian_total(t1, t2, t3, l1, l2, l3, l4, l5,x_base, y_base,theta_base,alph
     J[5,4]=1
     J[5,5]=0
     return J 
+
+def transfer_camframe_to_world(x_base, y_base,theta_base):
+    TCW = np.zeros((4, 4))
+    TCW[0,0]= -math.sin(theta_base)
+    TCW[0,1]= 0
+    TCW[0,2]= math.cos(theta_base)
+    TCW[0,3]= 0.122*math.cos(theta_base) + 0.033*math.sin(theta_base) + x_base
+    TCW[1,0]= math.cos(theta_base)
+    TCW[1,1]= 0
+    TCW[1,2]= math.sin(theta_base)
+    TCW[1,3]= 0.122*math.sin(theta_base) - 0.033*math.cos(theta_base) + y_base
+    TCW[2,0]= 0
+    TCW[2,1]= -1
+    TCW[2,2]= 0
+    TCW[2,3]= -0.082
+    TCW[3,0]= 0
+    TCW[3,1]= 0
+    TCW[3,2]= 0
+    TCW[3,3]= 1
+
+    return TCW
+
+
+
 
 def plot_arm_workspace():
     l1 = 0.108
