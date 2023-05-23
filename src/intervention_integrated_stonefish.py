@@ -16,6 +16,7 @@ from utils_lib.task_classes import *
 from std_msgs.msg import Float64MultiArray
 from std_srvs.srv import Trigger, TriggerRequest, EmptyResponse, TriggerResponse
 
+
 class JointController:
     def __init__(self):
 
@@ -124,7 +125,6 @@ class JointController:
         # print("camera sees",a)
         x=np.array(a)
         # print(x.shape)
-        # print(transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2]).shape)
         after= transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2])@ x
         after=after.T
         print("after",after)
