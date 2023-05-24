@@ -47,8 +47,8 @@ def DLS(A, damping):
 # Weighetd DLS
 def WDLS(J, damping, w):
     # J_i_bar, damping, x_dot - J_i @ dq, W
-    print("X.shape",J.shape)
-    print('w', w)
+    # print("X.shape",J.shape)
+    # print('w', w)
     I = np.eye(np.shape(J)[0])
     J_dls =  inv(w) @ J.T @ inv(J @ inv(w) @ J.T + damping**2 * I) 
     # np.linalg.pinv(X) @ y

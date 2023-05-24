@@ -23,10 +23,13 @@ class JointController:
     def __init__(self):
 
         self.sigma_d = [0.0,0.0,0.0,0,0,0]
-        self.damping = 0.01
+        
 
         self.desired_received = False
         self.goal_reached = False
+
+        self.damping = 0.1
+        self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
 
         # task related
         self.robot =  MobileManipulator("NAK-Bot")
@@ -121,18 +124,6 @@ class JointController:
 
         # Pass the received values to the desired file
         before= [position.x, position.y, position.z, orientation.x, orientation.y, orientation.z]
-        # a=[before[0]/100,before[1]/100,before[2]/100,1]
-        # # print("a",a)
-        # x=np.array(a)
-        # # print(x.shape)
-        # # print(transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2]).shape)
-        # after= transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.z_aruco)@ x
-        # after=after.T
-        # # print("after",after)
-        # after= list(after)
-        # self.desired=after[0:3]
-        # self.desired[3:0]= [0,0,0]
-        # print("desired",self.desired)
         #-----------------------------------------just a desired in world no cam 
         self.sigma_d = before[0:3]
         self.sigma_d[3:0]= [0,0,0] 
@@ -176,7 +167,8 @@ class JointController:
                 x_dot = K @ sigma_err
 
                 # Accumulate velocity
-                dq = dq + DLS(J_i_bar,self.damping) @ (x_dot - J_i @ dq) 
+                # dq = dq + DLS(J_i_bar,self.damping) @ (x_dot - J_i @ dq) 
+                dq = dq + WDLS(J_i_bar,self.damping, self.weights) @ (x_dot - J_i @ dq)
     
                 # Update null-space projector
                 P_i = P_i - pinv(J_i_bar) @ J_i_bar
@@ -195,7 +187,7 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    if abs_err < 0.01:
+                    if abs_err < 0.04:
                         self.goal_reached = True
                         self.desired_received = False
                    

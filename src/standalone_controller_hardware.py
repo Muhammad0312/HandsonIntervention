@@ -23,10 +23,13 @@ class JointController:
     def __init__(self):
 
         self.sigma_d = [0.0,0.0,0.0,0,0,0]
-        self.damping = 0.1
 
         self.desired_received = False
         self.goal_reached = False
+
+        self.damping = 0.1
+        self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
+
 
         # task related
         self.robot =  MobileManipulator("NAK-Bot")
@@ -175,8 +178,9 @@ class JointController:
                 x_dot = K @ sigma_err
 
                 # Accumulate velocity
-                dq = dq + DLS(J_i_bar,self.damping) @ (x_dot - J_i @ dq) 
-    
+                # dq = dq + DLS(J_i_bar,self.damping) @ (x_dot - J_i @ dq) 
+                dq = dq + WDLS(J_i_bar,self.damping, self.weights) @ (x_dot - J_i @ dq)
+
                 # print(dq)
 
                 # Update null-space projector
@@ -196,7 +200,7 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    if abs_err < 0.03:
+                    if abs_err < 0.05:
                         print('reached')
                         self.goal_reached = True
                         self.desired_received = False
