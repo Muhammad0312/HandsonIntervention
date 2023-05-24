@@ -93,7 +93,7 @@ class JointController:
         # Maximum linear velocity control action                   
         self.v_max = 0.15
         # Maximum angular velocity control action               
-        self.w_max = 0.3  
+        self.w_max = 0.6  
 
         self.joints_sub = rospy.Subscriber('/turtlebot/joint_states', JointState, self.get_joints)
 
@@ -123,23 +123,13 @@ class JointController:
 
         # Pass the received values to the desired file
         before= [position.x, position.y, position.z, orientation.x, orientation.y, orientation.z]
-        # a=[before[0]/100,before[1]/100,before[2]/100,1]
-        # # print("a",a)
-        # x=np.array(a)
-        # # print(x.shape)
-        # # print(transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2]).shape)
-        # after= transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.z_aruco)@ x
-        # after=after.T
-        # # print("after",after)
-        # after= list(after)
-        # self.desired=after[0:3]
-        # self.desired[3:0]= [0,0,0]
-        # print("desired",self.desired)
         #-----------------------------------------just a desired in world no cam 
         self.sigma_d = before[0:3]
         self.sigma_d[3:0]= [0,0,0] 
         print(self.sigma_d)
-        self.tasks[0].setDesired(np.array(self.sigma_d[0:3]).reshape(3,1))
+        for t in self.tasks:
+            if t.name == "End-effector position":
+                t.setDesired(np.array(self.sigma_d[0:3]).reshape(3,1))
         return True
 
     # Service to check if reached

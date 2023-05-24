@@ -33,7 +33,7 @@ class JointController:
 
         # task related
         self.robot =  MobileManipulator("NAK-Bot")
-        self.tasks = [Position2D("End-effector position", np.array([1.0,1.0,-0.2]).reshape(3,1))] 
+        # self.tasks = [Position2D("End-effector position", np.array([1.0,1.0,-0.2]).reshape(3,1))] 
         # self.tasks = [Position2D("End-effector position", np.array([0.2,0.2,-0.2]).reshape(3,1)),
         #               Orientation2D("End-effector orientation", np.array([0,0,1.57]).reshape(3,1))] 
         # self.tasks = [Orientation2D("End-effector orientation", np.array([0,0,1.57]).reshape(3,1))]
@@ -51,10 +51,11 @@ class JointController:
         #               ]
 
         # self.tasks = [JointLimit("Joint limit", -1.57, 1.57, 0.5, 0),
-        # self.tasks = [JointLimit("Joint limit", -1.57, 0, 0.2, 1),
-        #               JointLimit("Joint limit", -1.57, 0, 0.2, 2),
-        #             #   JointLimit("Joint limit", -1.57, 1.57, 0.5, 3),
-        #               Position2D("End-effector position", np.array([0.2,0.2,0.5]).reshape(3,1))]
+        self.tasks = [JointLimit("Joint limit", -1.57, 1.57, 0.5, 0),
+                      JointLimit("Joint limit", -1.57, 0, 0.2, 1),
+                      JointLimit("Joint limit", -1.57, 0, 0.2, 2),
+                      JointLimit("Joint limit", -1.57, 1.57, 0.5, 3),
+                      Position2D("End-effector position", np.array([0.2,0.2,0.5]).reshape(3,1))]
         
         # self.tasks = [Position2D("End-effector position", np.array([0.2,0.2,0.1]).reshape(3,1))]
                       
@@ -63,7 +64,7 @@ class JointController:
         # Set value of K for all tasks
         for t in self.tasks:
             if t.name == "End-effector position":
-                t.setK(np.diag([1.0,1.0,1.0]))
+                t.setK(np.diag([0.5,0.5,0.5]))
             elif t.name == "Joint position":
                 t.setK(np.array([1.0]))
             elif t.name == "End-effector orientation":
@@ -117,7 +118,7 @@ class JointController:
 
     def set_desired(self,msg):
         self.desired_received = True
-        print("called")
+        # print("called")
         # Access the desired information from the message
         position = msg.pose_msg.pose.position
         orientation = msg.pose_msg.pose.orientation
@@ -127,12 +128,15 @@ class JointController:
         #-----------------------------------------just a desired in world no cam 
         self.sigma_d = before[0:3]
         self.sigma_d[3:0]= [0,0,0] 
-        print(self.sigma_d)
-        self.tasks[0].setDesired(np.array(self.sigma_d[0:3]).reshape(3,1))
+        # print(self.sigma_d)
+        for t in self.tasks:
+            if t.name == "End-effector position":
+                t.setDesired(np.array(self.sigma_d[0:3]).reshape(3,1))
         return True
 
     # Service to check if reached
     def check_reached(self, req):
+        # print('shitititit')
         # Check if the robot is moving
         if self.goal_reached:
             self.goal_reached = False
@@ -187,7 +191,8 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    if abs_err < 0.04:
+                    print(abs_err)
+                    if abs_err < 0.03:
                         self.goal_reached = True
                         self.desired_received = False
                    

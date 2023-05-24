@@ -1,9 +1,0 @@
-digraph pastafarianism {
-ordering=out;
-graph [fontname="times-roman"];
-node [fontname="times-roman"];
-edge [fontname="times-roman"];
-"Mobile Pick n Place" [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ Mobile Pick n Place", shape=box, style=filled];
-go_pick [fillcolor=gray, fontcolor=black, fontsize=9, label=go_pick, shape=ellipse, style=filled];
-"Mobile Pick n Place" -> go_pick;
-}

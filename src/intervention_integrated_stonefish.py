@@ -122,18 +122,18 @@ class JointController:
 
         # # Pass the received values to the desired file
         before= [position.x, position.y, position.z, orientation.x, orientation.y, orientation.z]
-        # a=[(before[0]/100),before[1]/100,before[2]/100,1]
-        # # print('odom_received: ', self.current_pose)
-        # # print("camera sees",a)
-        # x=np.array(a)
-        # # print(x.shape)
-        # after= transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2])@ x
-        # after=after.T
-        # print("after",after)
-        # after= list(after)
-        # self.sigma_d=after[0:3]
-        # self.sigma_d[3:0]= [0,0,0]
-        self.sigma_d=[before[0],before[1],-before[2]]
+        a=[(before[0]/100),before[1]/100,before[2]/100,1]
+        # print('odom_received: ', self.current_pose)
+        # print("camera sees",a)
+        x=np.array(a)
+        # print(x.shape)
+        after= transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2])@ x
+        after=after.T
+        print("after",after)
+        after= list(after)
+        self.sigma_d=after[0:3]
+        self.sigma_d[3:0]= [0,0,0]
+        # self.sigma_d=[before[0],before[1],-before[2]]
         print(" self.sigma_d", self.sigma_d)
         #-----------------------------------------just a desired in world no cam  
         # print(self.sigma_d)
