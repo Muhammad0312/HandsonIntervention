@@ -3,6 +3,7 @@ import math
 from math import sin, cos, sqrt
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from numpy.linalg import inv
 import random
 
 def transfer_camframe_to_world(x_base, y_base,theta_base):
@@ -42,6 +43,19 @@ def DLS(A, damping):
     I = np.eye(np.shape(A)[0])
     brak1 = np.linalg.inv(np.dot(A, np.transpose(A)) + damping**2 * I)
     return np.dot(np.transpose(A),brak1)
+
+# Weighetd DLS
+def WDLS(J, damping, w):
+    # J_i_bar, damping, x_dot - J_i @ dq, W
+    print("X.shape",J.shape)
+    print('w', w)
+    I = np.eye(np.shape(J)[0])
+    J_dls =  inv(w) @ J.T @ inv(J @ inv(w) @ J.T + damping**2 * I) 
+    # np.linalg.pinv(X) @ y
+    # J_dls = J_dls.reshape(-1, 1)
+    # J_dls = J_dls.T
+    # J_dls = J_dls @ w.T
+    return J_dls
 
 def rpy_to_quaternion(rpy):
 
