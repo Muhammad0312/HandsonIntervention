@@ -28,7 +28,8 @@ class JointController:
         self.goal_reached = False
 
         self.damping = 0.1
-        self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
+        # self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 2.0, 1.0])
+        self.weights = np.diag([0.5, 0.5 , 0.5, 1.0, 2.0, 1.0])
 
 
         # task related
@@ -63,7 +64,7 @@ class JointController:
         # Set value of K for all tasks
         for t in self.tasks:
             if t.name == "End-effector position":
-                t.setK(np.diag([1.0,1.0,1.0]))
+                t.setK(np.diag([0.3,0.3,0.3]))
             elif t.name == "Joint position":
                 t.setK(np.array([1.0]))
             elif t.name == "End-effector orientation":
