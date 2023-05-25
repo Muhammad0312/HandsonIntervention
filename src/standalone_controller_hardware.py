@@ -28,8 +28,11 @@ class JointController:
         self.goal_reached = False
 
         self.damping = 0.1
-        # self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 2.0, 1.0])
-        self.weights = np.diag([0.5, 0.5 , 0.5, 1.0, 2.0, 1.0])
+        # for straight point
+        # self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
+        # for diagonal point
+        # self.weights = np.diag([0.3, 0.5 , 0.5, 1.0, 0.3, 1.0])
+        self.weights = np.diag([0.5, 1.0 , 1.0, 1.0, 2.0, 0.3])
 
 
         # task related
@@ -65,6 +68,7 @@ class JointController:
         for t in self.tasks:
             if t.name == "End-effector position":
                 t.setK(np.diag([0.3,0.3,0.3]))
+                # t.setK(np.diag([0.7,0.7,0.7]))
             elif t.name == "Joint position":
                 t.setK(np.array([1.0]))
             elif t.name == "End-effector orientation":
@@ -191,7 +195,8 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    if abs_err < 0.05:
+                    # if abs_err < 0.04: # fro straight
+                    if abs_err < 0.06: # fro curved
                         print('reached')
                         self.goal_reached = True
                         self.desired_received = False

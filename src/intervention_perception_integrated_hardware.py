@@ -21,10 +21,12 @@ class JointController:
     def __init__(self):
 
         self.sigma_d = [0.0,0.0,0.0,0,0,0]
-        self.damping = 0.01
+        self.damping = 0.1
 
         self.desired_received = False
         self.goal_reached = False
+
+        self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
 
         # task related
         self.robot =  MobileManipulator("NAK-Bot")
@@ -58,7 +60,8 @@ class JointController:
         # Set value of K for all tasks
         for t in self.tasks:
             if t.name == "End-effector position":
-                t.setK(np.diag([1.0,1.0,1.0]))
+                # t.setK(np.diag([0.3,0.3,0.3]))
+                t.setK(np.diag([0.7,0.7,0.7]))
             elif t.name == "Joint position":
                 t.setK(np.array([1.0]))
             elif t.name == "End-effector orientation":
@@ -89,7 +92,7 @@ class JointController:
         # Maximum linear velocity control action                   
         self.v_max = 0.15
         # Maximum angular velocity control action               
-        self.w_max = 0.3  
+        self.w_max = 0.6  
 
         #subscribe to joint positions
         self.joints_sub = rospy.Subscriber('/turtlebot/joint_states', JointState, self.get_joints)
@@ -120,18 +123,18 @@ class JointController:
 
         # # Pass the received values to the desired file
         before= [position.x, position.y, position.z, orientation.x, orientation.y, orientation.z]
-        a=[(before[0]/100),before[1]/100,before[2]/100,1]
+        # a=[(before[0]/100),before[1]/100,before[2]/100,1]
         # print('odom_received: ', self.current_pose)
         # print("camera sees",a)
-        x=np.array(a)
+        # x=np.array(a)
         # print(x.shape)
-        after= transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2])@ x
-        after=after.T
+        # after= transfer_camframe_to_world(self.current_pose[0], self.current_pose[1],self.current_pose[2])@ x
+        # after=after.T
         # print("after",after)
-        after= list(after)
-        self.sigma_d=after[0:3]
-        self.sigma_d[3:0]= [0,0,0]
-        # self.sigma_d=[before[0],before[1],-before[2]]
+        # after= list(after)
+        # self.sigma_d=after[0:3]
+        # self.sigma_d[3:0]= [0,0,0]
+        self.sigma_d=[before[0],before[1],before[2]]
         print(" self.sigma_d", self.sigma_d)
         #-----------------------------------------just a desired in world no cam  
         # print(self.sigma_d)
@@ -174,7 +177,7 @@ class JointController:
                 x_dot = K @ sigma_err
 
                 # Accumulate velocity
-                dq = dq + DLS(J_i_bar,self.damping) @ (x_dot - J_i @ dq) 
+                dq = dq + WDLS(J_i_bar,self.damping, self.weights) @ (x_dot - J_i @ dq)
     
                 # Update null-space projector
                 P_i = P_i - pinv(J_i_bar) @ J_i_bar
@@ -193,7 +196,7 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    if abs_err < 0.04:
+                    if abs_err < 0.03:
                         self.goal_reached = True
                         self.desired_received = False
                    
