@@ -188,7 +188,7 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    if abs_err < 0.03:
+                    if abs_err < 0.10:
                         self.goal_reached = True
                         self.desired_received = False
                    
