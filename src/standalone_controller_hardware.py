@@ -28,8 +28,11 @@ class JointController:
         self.goal_reached = False
 
         self.damping = 0.1
-        # self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 2.0, 1.0])
-        self.weights = np.diag([0.5, 0.5 , 0.5, 1.0, 2.0, 1.0])
+        # for straight point
+        # self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
+        # for diagonal point
+        # self.weights = np.diag([0.3, 0.5 , 0.5, 1.0, 0.3, 1.0])
+        self.weights = np.diag([0.5, 1.0 , 1.0, 1.0, 2.0, 0.3])
 
 
         # task related
@@ -65,6 +68,7 @@ class JointController:
         for t in self.tasks:
             if t.name == "End-effector position":
                 t.setK(np.diag([0.3,0.3,0.3]))
+                # t.setK(np.diag([0.7,0.7,0.7]))
             elif t.name == "Joint position":
                 t.setK(np.array([1.0]))
             elif t.name == "End-effector orientation":
@@ -99,8 +103,9 @@ class JointController:
         self.joints_sub = rospy.Subscriber('/turtlebot/joint_states', JointState, self.get_joints)
 
         # Subscriber to groundtruth odom tp get odom
-        self.odom_sub = rospy.Subscriber('kobuki/odom', Odometry, self.get_odom)
-        
+        # self.odom_sub = rospy.Subscriber('kobuki/odom', Odometry, self.get_odom)
+        self.odom_sub = rospy.Subscriber('/turtlebot/odom', PoseStamped, self.get_odom_stamped)
+
         # publish v and w
         self.cmd_pub = rospy.Publisher('/lin_ang_velocities', Twist, queue_size=1)
 
@@ -114,6 +119,38 @@ class JointController:
         # Service to set the goal
         rospy.Service('/set_desired', intervention_getpoint, self.set_desired)
         rospy.Service('/goal_reached', Trigger, self.check_reached)
+
+    def get_odom_stamped(self, odom):
+        # print('odom receved')
+        _, _, yaw = tf.transformations.euler_from_quaternion([odom.pose.orientation.x, 
+                                                              odom.pose.orientation.y,
+                                                              odom.pose.orientation.z,
+                                                              odom.pose.orientation.w])
+        self.current_pose = np.array([odom.pose.position.x, odom.pose.position.y, yaw])
+        self.t = self.current_pose[0] - self.last_x
+        self.last_x = self.current_pose[0]
+
+        self.alpha = self.current_pose[2] - self.last_theta
+        self.last_theta = self.current_pose[2]
+
+        # print('odom_received: ', self.current_pose)
+        self.odom_received =  True
+
+    def get_odom(self, odom):
+        _, _, yaw = tf.transformations.euler_from_quaternion([odom.pose.pose.orientation.x, 
+                                                            odom.pose.pose.orientation.y,
+                                                            odom.pose.pose.orientation.z,
+                                                            odom.pose.pose.orientation.w])
+        self.current_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, yaw])
+        
+        self.t = self.current_pose[0] - self.last_x
+        self.last_x = self.current_pose[0]
+
+        self.alpha = self.current_pose[2] - self.last_theta
+        self.last_theta = self.current_pose[2]
+
+        # print('odom_received: ', self.current_pose)
+        self.odom_received =  True
 
     def set_desired(self,msg):
         self.desired_received = True
@@ -191,7 +228,8 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    if abs_err < 0.05:
+                    # if abs_err < 0.04: # fro straight
+                    if abs_err < 0.06: # fro curved
                         print('reached')
                         self.goal_reached = True
                         self.desired_received = False
@@ -255,21 +293,6 @@ class JointController:
 
         self.desired_pose_pub.publish(new_pose2)
 
-    def get_odom(self, odom):
-        _, _, yaw = tf.transformations.euler_from_quaternion([odom.pose.pose.orientation.x, 
-                                                            odom.pose.pose.orientation.y,
-                                                            odom.pose.pose.orientation.z,
-                                                            odom.pose.pose.orientation.w])
-        self.current_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, yaw])
-        
-        self.t = self.current_pose[0] - self.last_x
-        self.last_x = self.current_pose[0]
-
-        self.alpha = self.current_pose[2] - self.last_theta
-        self.last_theta = self.current_pose[2]
-
-        # print('odom_received: ', self.current_pose)
-        self.odom_received =  True
 
     def __send_command__(self, v, w):
         '''
