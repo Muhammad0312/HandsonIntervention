@@ -26,7 +26,7 @@ class JointController:
         self.desired_received = False
         self.goal_reached = False
 
-        self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
+        self.weights = np.diag([0.1, 0.7 ,0.7, 0.1, 1.0, 1.0])
 
         # task related
         self.robot =  MobileManipulator("NAK-Bot")
@@ -60,7 +60,7 @@ class JointController:
         # Set value of K for all tasks
         for t in self.tasks:
             if t.name == "End-effector position":
-                t.setK(np.diag([1.0,1.0,1.0]))
+                t.setK(np.diag([0.5,0.5,0.5]))
             elif t.name == "Joint position":
                 t.setK(np.array([1.0]))
             elif t.name == "End-effector orientation":
@@ -70,7 +70,7 @@ class JointController:
             elif t.name == "Obstacle avoidance":
                 t.setK(np.diag([1.0, 1.0]))
             elif t.name == "Joint limit":
-                t.setK(np.array([1.0]))
+                t.setK(np.array([0.2]))
             elif t.name == "Base Orientation":
                 t.setK(np.array([1.0]))
 
@@ -98,6 +98,7 @@ class JointController:
 
         # Subscriber to groundtruth odom tp get odom
         self.odom_sub = rospy.Subscriber('/turtlebot/stonefish_simulator/ground_truth_odometry', Odometry, self.get_odom)
+        # self.odom_sub = rospy.Subscriber('/kobuki/odom', Odometry, self.get_odom)
         
         # publish v and w
         self.cmd_pub = rospy.Publisher('/lin_ang_velocities', Twist, queue_size=1)
@@ -188,7 +189,7 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    if abs_err < 0.10:
+                    if abs_err < 0.03:
                         self.goal_reached = True
                         self.desired_received = False
                    
