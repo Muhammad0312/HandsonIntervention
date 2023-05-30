@@ -98,7 +98,8 @@ class JointController:
         self.joints_sub = rospy.Subscriber('/turtlebot/joint_states', JointState, self.get_joints)
 
         # Subscriber to groundtruth odom tp get odom
-        self.odom_sub = rospy.Subscriber('kobuki/odom', Odometry, self.get_odom)
+        # self.odom_sub = rospy.Subscriber('kobuki/odom', Odometry, self.get_odom)
+        self.odom_sub = rospy.Subscriber('/turtlebot/odom', PoseStamped, self.get_odom_stamped)
         
         # publish v and w
         self.cmd_pub = rospy.Publisher('/lin_ang_velocities', Twist, queue_size=1)
@@ -113,6 +114,37 @@ class JointController:
         # Service to set the goal
         rospy.Service('/set_desired',intervention_getpoint, self.set_desired)
         rospy.Service('/goal_reached', Trigger, self.check_reached)
+
+    def get_odom(self, odom):
+        _, _, yaw = tf.transformations.euler_from_quaternion([odom.pose.pose.orientation.x, 
+                                                            odom.pose.pose.orientation.y,
+                                                            odom.pose.pose.orientation.z,
+                                                            odom.pose.pose.orientation.w])
+        self.current_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, yaw])
+        self.z_aruco = odom.pose.pose.orientation.z
+        self.t = self.current_pose[0] - self.last_x
+        self.last_x = self.current_pose[0]
+
+        self.alpha = self.current_pose[2] - self.last_theta
+        self.last_theta = self.current_pose[2]
+
+        self.odom_received =  True
+
+    def get_odom_stamped(self, odom):
+        # print('odom receved')
+        _, _, yaw = tf.transformations.euler_from_quaternion([odom.pose.orientation.x, 
+                                                              odom.pose.orientation.y,
+                                                              odom.pose.orientation.z,
+                                                              odom.pose.orientation.w])
+        self.current_pose = np.array([odom.pose.position.x, odom.pose.position.y, yaw])
+        self.t = self.current_pose[0] - self.last_x
+        self.last_x = self.current_pose[0]
+
+        self.alpha = self.current_pose[2] - self.last_theta
+        self.last_theta = self.current_pose[2]
+
+        # print('odom_received: ', self.current_pose)
+        self.odom_received =  True
 
     def set_desired(self,msg):
         self.desired_received = True
@@ -190,7 +222,7 @@ class JointController:
                 self.velocity_pub.publish(velocity_msg)
 
                 # publish base vels
-                alpha_dot = dq[4]
+                alpha_dot = -dq[4]
                 t_dot = dq[5]
                 self.__send_command__(t_dot, alpha_dot)
 
@@ -222,7 +254,7 @@ class JointController:
     def publish_points(self):
 
         new_pose = PoseStamped()
-        new_pose.header.frame_id = 'world_ned'
+        new_pose.header.frame_id = 'map'
         new_pose.header.stamp = rospy.Time.now()
 
         curr_pose = self.robot.get_T()
@@ -241,7 +273,7 @@ class JointController:
         self.EE_pose_pub.publish(new_pose)
         
         new_pose2 = PoseStamped()
-        new_pose2.header.frame_id = 'world_ned'
+        new_pose2.header.frame_id = 'map'
         new_pose2.header.stamp = rospy.Time.now()
     
         new_pose2.pose.position.x = self.sigma_d[0]
@@ -258,20 +290,6 @@ class JointController:
 
         self.desired_pose_pub.publish(new_pose2)
 
-    def get_odom(self, odom):
-        _, _, yaw = tf.transformations.euler_from_quaternion([odom.pose.pose.orientation.x, 
-                                                            odom.pose.pose.orientation.y,
-                                                            odom.pose.pose.orientation.z,
-                                                            odom.pose.pose.orientation.w])
-        self.current_pose = np.array([odom.pose.pose.position.x, odom.pose.pose.position.y, yaw])
-        self.z_aruco = odom.pose.pose.orientation.z
-        self.t = self.current_pose[0] - self.last_x
-        self.last_x = self.current_pose[0]
-
-        self.alpha = self.current_pose[2] - self.last_theta
-        self.last_theta = self.current_pose[2]
-
-        self.odom_received =  True
 
     def __send_command__(self, v, w):
         '''

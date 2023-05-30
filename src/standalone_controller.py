@@ -15,9 +15,11 @@ from numpy.linalg import pinv
 from autonomous_task_NAK.srv import intervention_getpoint
 
 from utils_lib.task_classes import *
+import signal
 
 from std_msgs.msg import Float64MultiArray
 from std_srvs.srv import Trigger, TriggerRequest, EmptyResponse, TriggerResponse
+import matplotlib.pyplot as plt
 
 class JointController:
     def __init__(self):
@@ -84,7 +86,7 @@ class JointController:
 
 
         # anon variables
-        self.current_pose = [0.0,0.0,0.0]
+        self.current_pose = [0.0, 0.0, 0.0]
 
         self.t = 0
         self.alpha = 0
@@ -95,6 +97,12 @@ class JointController:
         self.v_max = 0.15
         # Maximum angular velocity control action               
         self.w_max = 0.3  
+
+        self.error = []
+        # self.start_time = time.time()
+        self.time = []
+        self.joints = []
+
 
         #subscribe to joint positions
         self.joints_sub = rospy.Subscriber('/turtlebot/joint_states', JointState, self.get_joints)
@@ -116,6 +124,50 @@ class JointController:
         rospy.Service('/set_desired', intervention_getpoint, self.set_desired)
         rospy.Service('/goal_reached', Trigger, self.check_reached)
 
+    def keyboard_interrupt_handler(self, signal, frame):
+        time_arr = np.array(self.time)
+        time_arr = time_arr - time_arr[0]
+        error_arr = np.array(self.error)
+        joints_arr = np.array(self.joints)
+        q1_min = self.tasks[0].q_min
+        q1_max = self.tasks[0].q_max
+        q2_min = self.tasks[1].q_min
+        q2_max = self.tasks[1].q_max
+        q3_min = self.tasks[2].q_min
+        q3_max = self.tasks[2].q_max
+        q4_min = self.tasks[3].q_min
+        q4_max = self.tasks[3].q_max
+        print('Time array: ', time_arr.shape)
+        print('Error array: ', error_arr.shape)
+
+        fig, ax = plt.subplots(figsize=(15,10))
+
+        # Plot data  
+        ax.plot(time_arr, error_arr, label='norm error')
+        ax.plot(time_arr, joints_arr[:, 0], label='q1')
+        ax.plot(time_arr, joints_arr[:, 1], label='q2')
+        ax.plot(time_arr, joints_arr[:, 2], label='q3')
+        ax.plot(time_arr, joints_arr[:, 3], label='q4')
+        ax.plot(time_arr, q1_min*np.ones(time_arr.shape), label='q1 min limit', linestyle = 'dashed')
+        ax.plot(time_arr, q1_max*np.ones(time_arr.shape), label='q1 max limit', linestyle = 'dashed')
+        ax.plot(time_arr, q2_min*np.ones(time_arr.shape), label='q2 min limit', linestyle = 'dashed')
+        ax.plot(time_arr, q2_max*np.ones(time_arr.shape), label='q2 max limit', linestyle = 'dashed')
+        ax.plot(time_arr, q3_min*np.ones(time_arr.shape), label='q3 min limit', linestyle = 'dashed')
+        ax.plot(time_arr, q3_max*np.ones(time_arr.shape), label='q3 max limit', linestyle = 'dashed')
+        ax.plot(time_arr, q4_min*np.ones(time_arr.shape), label='q4 min limit', linestyle = 'dashed')
+        ax.plot(time_arr, q4_max*np.ones(time_arr.shape), label='q4 max limit', linestyle = 'dashed')
+
+        ax.set_xlabel('Time[s]')
+        ax.set_ylabel('Error [m]') 
+            
+        # Add title and legend
+        ax.grid() 
+        ax.set_title('Joint Positions')
+        ax.legend()
+        plt.savefig('/home/mawais/images/image'+str(np.round(time.time(), 2))+'.png')
+        plt.close()
+    # Add your desired code here
+
     def set_desired(self,msg):
         self.desired_received = True
         # print("called")
@@ -125,9 +177,10 @@ class JointController:
 
         # Pass the received values to the desired file
         before= [position.x, position.y, position.z, orientation.x, orientation.y, orientation.z]
+
         #-----------------------------------------just a desired in world no cam 
         self.sigma_d = before[0:3]
-        self.sigma_d[3:0]= [0,0,0] 
+        self.sigma_d[3:0]= [0, 0, 0] 
         # print(self.sigma_d)
         for t in self.tasks:
             if t.name == "End-effector position":
@@ -140,6 +193,13 @@ class JointController:
         # Check if the robot is moving
         if self.goal_reached:
             self.goal_reached = False
+            # plotting joint position over time
+
+            # self.time = []
+            # self.error = []
+
+            # Show the plot
+            # plt.show()  
             return TriggerResponse(success=True, message='EE successfully reached desired')
         else:
             return TriggerResponse(success=False, message='EE not reached desired yet')
@@ -152,6 +212,9 @@ class JointController:
 
         for t in self.tasks:
             J_i, sigma_err = t.update(self.robot)
+            # print(t.name, ' : ', sigma_err)
+            # self.time.append(time.time())
+            # self.error.append(sigma_err)
             if t.isActive():
                 # print(t.name)
                 # print('jacob shape: ', J_i.shape)
@@ -191,12 +254,14 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
-                    print(abs_err)
+                    self.joints.append([self.robot.q1, self.robot.q2, self.robot.q3, self.robot.q4])
+                    self.time.append(time.time())
+                    self.error.append(abs_err[0])
+                    # print(abs_err)
                     if abs_err < 0.03:
                         self.goal_reached = True
                         self.desired_received = False
-                   
-
+        
         self.publish_points()
 
 
@@ -289,6 +354,7 @@ if __name__ == '__main__':
     print('node created')
     try:
         t = JointController()
+        signal.signal(signal.SIGINT, t.keyboard_interrupt_handler)
         rospy.spin()
     except rospy.ROSInterruptException:
         pass

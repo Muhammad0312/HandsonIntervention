@@ -32,7 +32,7 @@ class JointController:
         # self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
         # for diagonal point
         # self.weights = np.diag([0.3, 0.5 , 0.5, 1.0, 0.3, 1.0])
-        self.weights = np.diag([0.5, 1.0 , 1.0, 1.0, 2.0, 0.3])
+        self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 0.2, 1.0])
 
 
         # task related
@@ -67,7 +67,7 @@ class JointController:
         # Set value of K for all tasks
         for t in self.tasks:
             if t.name == "End-effector position":
-                t.setK(np.diag([0.3,0.3,0.3]))
+                t.setK(np.diag([1.0,1.0,1.0]))
                 # t.setK(np.diag([0.7,0.7,0.7]))
             elif t.name == "Joint position":
                 t.setK(np.array([1.0]))
@@ -228,8 +228,9 @@ class JointController:
 
                 if t.name == "End-effector position" or t.name == 'End-effector configuration':
                     abs_err= np.sqrt(sigma_err[0]**2+sigma_err[1]**2+sigma_err[2]**2)
+                    print("Error: ", abs_err)
                     # if abs_err < 0.04: # fro straight
-                    if abs_err < 0.06: # fro curved
+                    if abs_err < 0.04: # fro curved
                         print('reached')
                         self.goal_reached = True
                         self.desired_received = False
@@ -257,7 +258,7 @@ class JointController:
     def publish_points(self):
 
         new_pose = PoseStamped()
-        new_pose.header.frame_id = 'world_ned'
+        new_pose.header.frame_id = 'map'
         new_pose.header.stamp = rospy.Time.now()
 
         curr_pose = self.robot.get_T()
@@ -276,7 +277,7 @@ class JointController:
         self.EE_pose_pub.publish(new_pose)
         
         new_pose2 = PoseStamped()
-        new_pose2.header.frame_id = 'world_ned'
+        new_pose2.header.frame_id = 'map'
         new_pose2.header.stamp = rospy.Time.now()
     
         new_pose2.pose.position.x = self.sigma_d[0]
