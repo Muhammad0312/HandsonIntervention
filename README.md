@@ -1,9 +1,15 @@
 ﻿# Hands-on Intervention
 
 last update:
-5May 9.04: Package made, orientation of EE set
+30 May 
 
-## HOW TO RUN:
+# Intervention
+
+- roslaunch autonomous_task_NAK intervention_stonefish.launch
+- roslaunch autonomous_task_NAK intervention_hardware.launch
+
+
+## Dev Phase: (Ignore)
 
 **launch mobile stuff**
 1. roslaunch turtlebot_simulation turtlebot_hoi.launch
