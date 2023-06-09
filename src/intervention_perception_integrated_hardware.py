@@ -26,11 +26,14 @@ class JointController:
         self.desired_received = False
         self.goal_reached = False
 
+        # self.weights = np.diag([0.35, 1.0 , 1.0, 1.0, 5.0, 1.0])
+        # self.weights = np.diag([0.2, 1.0 , 1.0, 1.0, 2.0, 2.0]) # working
+        # self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 0.2, 1.0])
         self.weights = np.diag([1.0, 1.0 , 1.0, 1.0, 1.0, 1.0])
 
         # task related
         self.robot =  MobileManipulator("NAK-Bot")
-        self.tasks = [Position2D("End-effector position", np.array([1.0,1.0,-0.2]).reshape(3,1))] 
+        # self.tasks = [Position2D("End-effector position", np.array([1.0,1.0,-0.2]).reshape(3,1))] 
         # self.tasks = [Position2D("End-effector position", np.array([0.2,0.2,-0.2]).reshape(3,1)),
         #               Orientation2D("End-effector orientation", np.array([0,0,1.57]).reshape(3,1))] 
         # self.tasks = [Orientation2D("End-effector orientation", np.array([0,0,1.57]).reshape(3,1))]
@@ -48,10 +51,11 @@ class JointController:
         #               ]
 
         # self.tasks = [JointLimit("Joint limit", -1.57, 1.57, 0.5, 0),
-        # self.tasks = [JointLimit("Joint limit", -1.57, 0, 0.2, 1),
-        #               JointLimit("Joint limit", -1.57, 0, 0.2, 2),
-        #             #   JointLimit("Joint limit", -1.57, 1.57, 0.5, 3),
-        #               Position2D("End-effector position", np.array([0.2,0.2,0.5]).reshape(3,1))]
+        self.tasks = [JointLimit("Joint limit", -1.57, 1.57, 0.2, 0),
+                      JointLimit("Joint limit", -1.57, 0, 0.2, 1),
+                      JointLimit("Joint limit", -1.57, 0, 0.2, 2),
+                      JointLimit("Joint limit", -1.57, 1.57, 0.2, 3),
+                      Position2D("End-effector position", np.array([0.2,0.2,0.5]).reshape(3,1))]
         
         # self.tasks = [Position2D("End-effector position", np.array([0.2,0.2,0.1]).reshape(3,1))]
                       
@@ -71,7 +75,7 @@ class JointController:
             elif t.name == "Obstacle avoidance":
                 t.setK(np.diag([1.0, 1.0]))
             elif t.name == "Joint limit":
-                t.setK(np.array([1.0]))
+                t.setK(np.array([0.1]))
             elif t.name == "Base Orientation":
                 t.setK(np.array([1.0]))
 
@@ -170,7 +174,10 @@ class JointController:
         print(" self.sigma_d", self.sigma_d)
         #-----------------------------------------just a desired in world no cam  
         # print(self.sigma_d)
-        self.tasks[0].setDesired(np.array(self.sigma_d[0:3]).reshape(3,1))
+        for t in self.tasks:
+            if t.name == "End-effector position":
+                t.setDesired(np.array(self.sigma_d[0:3]).reshape(3,1))
+        # self.tasks[0].setDesired(np.array(self.sigma_d[0:3]).reshape(3,1))
         return True
 
     # Service to check if reached
